@@ -195,3 +195,17 @@ type StreamOptions struct {
 	// simulates model compute throughput.
 	TokensPerSecond float64 `json:"tokens_per_second,omitempty"`
 }
+
+// Model represents a model in the API
+type Model struct {
+	ID      string `json:"id"`
+	Object  string `json:"object"`
+	Created int64  `json:"created"`
+	OwnedBy string `json:"owned_by"`
+}
+
+// ModelList represents a list of models
+type ModelList struct {
+	Object string  `json:"object"`
+	Data   []Model `json:"data"`
+}

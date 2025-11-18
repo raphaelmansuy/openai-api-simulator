@@ -31,6 +31,11 @@ func (g *IDGenerator) GenerateToolCallID() string {
 	return "call_" + uuid.New().String()[:24]
 }
 
+// CurrentTimestamp returns the current Unix timestamp
+func CurrentTimestamp() int64 {
+	return time.Now().Unix()
+}
+
 // EstimateTokens estimates the number of tokens in a string
 func EstimateTokens(text string) int64 {
 	if text == "" {

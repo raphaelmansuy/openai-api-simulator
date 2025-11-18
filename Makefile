@@ -6,7 +6,7 @@ SIM_PORT?=3080
 OPENWEBUI_PORT?=3000
 IMAGE?=openai-api-simulator:latest
 
-.PHONY: all build run test tidy clean fmt help compose-logs compose-openwebui docker-run-openwebui docker-run docker-clean open
+.PHONY: all build run run-serve run-nanochat test tidy clean fmt help compose-logs compose-openwebui docker-run-openwebui docker-run docker-clean open
 
 all: build
 
@@ -14,7 +14,13 @@ build:
 	go build -o $(BINARY) ./cmd/server
 
 run: build
-	./$(BINARY) -port $(PORT)
+	./$(BINARY) serve --port $(PORT)
+
+run-serve: build
+	./$(BINARY) serve --port $(PORT)
+
+run-nanochat: build
+	./$(BINARY) nanochat --port $(PORT)
 
 test:
 	go test ./... -v
@@ -83,7 +89,10 @@ help:
 	@echo "Usage: make <target>"
 	@echo "Available targets:" 
 	@echo "  build                - Build the simulator binary"
-	@echo "  run PORT=<port>      - Run the simulator locally (default: 3080)"
+	@echo "  run PORT=<port>      - Run the simulator in serve mode (fake responses)"
+	@echo "  run-serve            - Alias for 'run' (fake mode)"
+	@echo "  run-nanochat         - Run with real local inference (llama.cpp + nanochat model)"
+	@echo "  test                 - Run tests"
 	@echo "  docker-build         - Build the docker image"
 	@echo "  docker-run           - Run simulator image on port $(PORT)"
 	@echo "  docker-run-openwebui - Run Open Web UI container (connects to host simulator)"
@@ -92,4 +101,3 @@ help:
 	@echo "  compose-logs         - Tail the compose logs"
 	@echo "  compose-down         - Stop the compose stack"
 	@echo "  open                 - Open the Open Web UI in your default browser (macOS 'open')"
-	@echo "  test                 - Run tests"
