@@ -1,11 +1,16 @@
 # OpenAI API Simulator
 
-This is a compact, dependency-free OpenAI-compatible Chat Completion simulator written in Go. It exposes a minimal, predictable subset of OpenAI Chat Completion features so you can test UIs, integrate tool-calling flows, or build deterministic CI tests without calling a paid service.
+This is a compact, OpenAI-compatible Chat Completion simulator written in Go. It supports **two modes**:
+
+1. **Fake Mode (default)**: Fast, predictable simulated responses for testing
+2. **NanoChat Mode (NEW!)**: Real local inference with llama.cpp - zero-friction local LLM
 
 ![Demo of streaming chat completions from the OpenAI API Simulator](./demo.gif)
 
-Why this repo is helpful
+## Why Use This?
 
+- **Fake Mode**: Lightning-fast responses for testing UIs and CI/CD pipelines
+- **NanoChat Mode**: Real local inference in one command (auto-downloads everything!)
 - Lightweight single-binary service for local development
 - OpenAI-style endpoints for chat completions and models
 - SSE streaming with OpenAI-compatible `data: <json>` framing
@@ -14,20 +19,59 @@ Why this repo is helpful
 
 ## Running
 
-Quick start (recommended):
+### Option 1: NanoChat Mode (Real Local Inference) 🚀 NEW!
 
-1. Build the server and run it on port 3080:
+Get real local inference with **zero manual setup**:
+
+```bash
+make build
+make run-nanochat
+```
+
+Or:
+
+```bash
+go build ./cmd/server
+./server nanochat
+```
+
+**What happens on first run:**
+1. Auto-detects your platform (macOS/Linux, Intel/ARM)
+2. Downloads llama.cpp binary (~45MB)
+3. Downloads nanochat model (~316MB, ~561M parameters)
+4. Starts llama.cpp server with GPU support (Metal on Apple Silicon)
+5. Starts the OpenAI-compatible proxy
+
+**Subsequent runs are instant!** Everything is cached in `~/.cache/openai-api-simulator`
+
+**Available models:**
+```bash
+./server nanochat --model nanochat        # Default: 561M params, ~316MB (fast download!)
+./server nanochat --model phi3.5-mini     # 3.8B params, ~2.4GB (better reasoning)
+./server nanochat --model qwen2.5-3b      # 3B params, ~1.9GB (multilingual)
+./server nanochat --model gemma2-2b       # 2B params, ~1.6GB (efficient)
+./server nanochat --model tinyllama       # 1.1B params, ~669MB (compact)
+```
+
+**Use your own model:**
+```bash
+./server nanochat --model-path /path/to/your-model.gguf
+```
+
+### Option 2: Fake Mode (Simulated Responses)
+
+Quick start for testing without any downloads:
 
 ```bash
 make build
 make run PORT=3080
 ```
 
-1. Or run directly with go build:
+Or:
 
 ```bash
 go build ./cmd/server
-./server -port 3080
+./server serve --port 3080
 ```
 
 This will start an HTTP server with the route: `POST /v1/chat/completions`.
@@ -39,14 +83,22 @@ Additional useful endpoints
 - `GET /v1/models` and `GET /models` - model listing
 - `POST /v1/chat/completions` and `POST /chat/completions` - chat completions (streaming or non-streaming)
 
-Command-line stream configuration
+### Command-line Options
 
-You can set default streaming latency and token throttles when starting the server. These defaults apply when the client does not include `stream_options` in the request.
-
-Example flags:
-
+**Fake mode (serve):**
 ```bash
-./server -port 3080 -stream_delay_min_ms 50 -stream_delay_max_ms 200 -stream_tokens_per_second 30
+./server serve --port 3080 \
+  --stream-delay-min-ms 50 \
+  --stream-delay-max-ms 200 \
+  --stream-tokens-per-second 30
+```
+
+**NanoChat mode:**
+```bash
+./server nanochat \
+  --port 3080 \              # Public API port
+  --llama-port 8081 \        # Internal llama.cpp port
+  --model nanochat           # or phi3.5-mini, qwen2.5-3b, etc.
 ```
 
 This starts the simulator with 50–200ms jitter per chunk and aims to emit tokens at ~30 tokens/sec.
